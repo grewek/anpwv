@@ -1,5 +1,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <assert.h>
 #include <GLFW/glfw3.h>
 
@@ -33,7 +35,25 @@ int main(int argc, char *argv[]) {
     VkInstance instance;
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
     check_vulkan_result(&result, "Cannot initialize a VkInstance");
+    //------
 
+    //List all PhysicalDevices and select the first one
+    uint32_t count;
+    vkEnumeratePhysicalDevices(instance, &count, nullptr);
+    assert(count > 0);
+
+    VkPhysicalDevice *physicalDevices = (VkPhysicalDevice *)calloc(count, sizeof(VkPhysicalDevice));
+    if(physicalDevices == nullptr) {
+        fprintf(stderr, "ERROR: could not allocate memory for physicaldevice listing\n");
+        return -1;
+    }
+
+    vkEnumeratePhysicalDevices(instance, &count, physicalDevices);
+    VkPhysicalDevice physicalDevice = physicalDevices[0];
+    //-----
+
+    //For good measure we free the memory we got from our good buddy the os here...
+    free(physicalDevices);
     return 0;
 }
 
