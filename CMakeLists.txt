@@ -5,6 +5,7 @@ project(anpwv
     LANGUAGES CXX
 )
 
+set(CMAKE_BUILD_TYPE Debug)
 add_executable(anpwv
     src/anpwv.cpp
 )
