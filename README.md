@@ -23,7 +23,9 @@ entertaining the order is probably not really well thought. I will work on it as
 
 # Achievments earned
 * Spelling for Beginners (Write the word achievement wrong in every sentence of the README.md)
+* Docs are for loosers (add the vulkan and glfw docs)
 * CMake Galore (Setup a basic project with CMake)
+* Prepare the blunt tools (Setup VSCode as Debugger)
 * Garbage dump (Host the whole project on github)
 * One Beer Kay (Add stupid achievments to the project :D)
 
