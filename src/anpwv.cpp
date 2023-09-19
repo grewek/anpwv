@@ -52,7 +52,27 @@ int main(int argc, char *argv[]) {
     VkPhysicalDevice physicalDevice = physicalDevices[0];
     //-----
 
-    //For good measure we free the memory we got from our good buddy the os here...
+    //Create a Logical Device
+    float priority = 1.0f;
+    VkDeviceQueueCreateInfo queueCreateInfo = {};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = 0;
+    queueCreateInfo.queueCount = 1;
+    queueCreateInfo.pQueuePriorities = &priority;
+
+    const char *enabledExtensions = { "VK_KHR_swapchain" };
+
+    VkDeviceCreateInfo createInfoQueue = {};
+    createInfoQueue.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfoQueue.queueCreateInfoCount = 1;
+    createInfoQueue.pQueueCreateInfos = &queueCreateInfo;
+    createInfoQueue.enabledExtensionCount = 1;
+    createInfoQueue.ppEnabledExtensionNames = &enabledExtensions;
+
+    VkDevice device;
+    VkResult deviceResult = vkCreateDevice(physicalDevice, &createInfoQueue, nullptr, &device);
+    check_vulkan_result(&deviceResult, "Could not create logical device");
+
     free(physicalDevices);
     return 0;
 }
