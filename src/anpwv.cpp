@@ -5,6 +5,9 @@
 #include <assert.h>
 #include <GLFW/glfw3.h>
 
+void glfw_error_callback(int error, const char *description) {
+    fprintf(stderr, "GLFW ERROR: %s\n", description);
+}
 
 void check_vulkan_result(VkResult *result, const char *msg) {
     if(*result != VK_SUCCESS) {
@@ -21,13 +24,13 @@ int main(int argc, char *argv[]) {
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
-    const char *instanceExtensions[1] = { "VK_KHR_surface" };
+    const char *instanceExtensions[3] = { "VK_KHR_surface", "VK_KHR_xcb_surface", "VK_EXT_debug_utils" };
     const char *enabledLayers[1] = { "VK_LAYER_KHRONOS_validation" };
 
     VkInstanceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &applicationInfo;
-    createInfo.enabledExtensionCount = 1;
+    createInfo.enabledExtensionCount = 3;
     createInfo.ppEnabledExtensionNames = instanceExtensions;
     createInfo.enabledLayerCount = 1;
     createInfo.ppEnabledLayerNames = enabledLayers;
@@ -37,6 +40,8 @@ int main(int argc, char *argv[]) {
     check_vulkan_result(&result, "Cannot initialize a VkInstance");
     //------
 
+    //Setup a debug utils
+        //TODO: We need a working allocator for the Debug Messegner !
     //List all PhysicalDevices and select the first one
     uint32_t count;
     vkEnumeratePhysicalDevices(instance, &count, nullptr);
@@ -72,15 +77,57 @@ int main(int argc, char *argv[]) {
     VkDevice device;
     VkResult deviceResult = vkCreateDevice(physicalDevice, &createInfoQueue, nullptr, &device);
     check_vulkan_result(&deviceResult, "Could not create logical device");
+    
+    //Create a surface via GLFW we need to set GLFW_NO_API in order to do this
+    GLFWwindow *window;
+
+    if(!glfwInit()) return -1;
+    glfwSetErrorCallback(glfw_error_callback);
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    window = glfwCreateWindow(1920, 1080, "Hello World", NULL, NULL);
+
+    if(!window) {
+        glfwTerminate();
+        return -1;
+    }
+
+    VkSurfaceKHR surface;
+    VkResult surfaceResult = glfwCreateWindowSurface(instance, window, NULL, &surface);
+
+    //Setup a Swapchain with four images !
+    VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
+    swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchainCreateInfo.surface = surface;
+    swapchainCreateInfo.minImageCount = 4;
+    swapchainCreateInfo.imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+    swapchainCreateInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    swapchainCreateInfo.imageExtent = VkExtent2D { 1920, 1080 };
+    swapchainCreateInfo.imageArrayLayers = 1;
+    swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapchainCreateInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+
+    VkSwapchainKHR swapchain;
+    vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain); 
+
+    glfwMakeContextCurrent(window);
+
+    while(!glfwWindowShouldClose(window)) {
+        fprintf(stdout, "Acquire Image\n");
+        fprintf(stdout, "Draw Image\n");
+        fprintf(stdout, "Present Image\n");
+    }
+
+    glfwTerminate();
 
     free(physicalDevices);
+    //TODO: Right now the validation layer is not very happy about the way i am ignoring certain fields
+    //  this must be fixed!
     return 0;
 }
 
 //NOTE: glfw_main will be our main later.
-void glfw_error_callback(int error, const char *description) {
-    fprintf(stderr, "GLFW ERROR: %s\n", description);
-}
+
 
 int glfw_main() {
     GLFWwindow *window;
